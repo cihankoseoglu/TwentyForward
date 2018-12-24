@@ -9,70 +9,96 @@
 import SpriteKit
 import GameplayKit
 
+struct PhysicsCategory {
+    static let none: UInt32 = 0b01
+    static let ball: UInt32 = 0b10
+    static let boundary: UInt32 = 0b11
+}
+
 class GameScene: SKScene {
     
     var entities = [GKEntity]()
     var graphs = [String : GKGraph]()
     
     private var lastUpdateTime : TimeInterval = 0
-    private var label : SKLabelNode?
-    private var spinnyNode : SKShapeNode?
     
     override func sceneDidLoad() {
-
-        self.lastUpdateTime = 0
+        lastUpdateTime = 0
+        backgroundColor = SKColor.white
+    }
+    
+    override func didMove(to view: SKView) {
+        let leftBoundary = SKShapeNode(rect: CGRect(x: 0, y: 0, width: 10, height: frame.height))
+        let rightBoundary = SKShapeNode(rect: CGRect(x: frame.width, y: 0, width: 0, height: frame.height))
         
-        // Get label node from scene and store it for use later
-        self.label = self.childNode(withName: "//helloLabel") as? SKLabelNode
-        if let label = self.label {
-            label.alpha = 0.0
-            label.run(SKAction.fadeIn(withDuration: 2.0))
-        }
+        leftBoundary.physicsBody?.isDynamic = false
+        rightBoundary.physicsBody?.isDynamic = false
         
-        // Create shape node to use during mouse interaction
-        let w = (self.size.width + self.size.height) * 0.05
-        self.spinnyNode = SKShapeNode.init(rectOf: CGSize.init(width: w, height: w), cornerRadius: w * 0.3)
+        physicsWorld.gravity = .zero
+        physicsWorld.contactDelegate = self
         
-        if let spinnyNode = self.spinnyNode {
-            spinnyNode.lineWidth = 2.5
-            
-            spinnyNode.run(SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat(Double.pi), duration: 1)))
-            spinnyNode.run(SKAction.sequence([SKAction.wait(forDuration: 0.5),
-                                              SKAction.fadeOut(withDuration: 0.5),
-                                              SKAction.removeFromParent()]))
-        }
+        leftBoundary.physicsBody?.categoryBitMask = PhysicsCategory.boundary
+        rightBoundary.physicsBody?.categoryBitMask = PhysicsCategory.boundary
+        leftBoundary.physicsBody?.collisionBitMask = PhysicsCategory.ball
+        rightBoundary.physicsBody?.collisionBitMask = PhysicsCategory.ball
+        leftBoundary.fillColor = SKColor(red: 0, green: 0, blue: 33.0/255.0, alpha: 1.0)
+        
+        addChild(leftBoundary)
+        addChild(rightBoundary)
+        
+        addBall(withSpeed: -60.5)
+    }
+    
+    func addBall(withSpeed: CGFloat) {
+        let ball = SKSpriteNode(imageNamed: "genericball")
+        ball.size = CGSize(width: 60, height: 60)
+        ball.position = CGPoint(x: size.width * 0.5, y: size.height * 0.9)
+        ball.physicsBody = SKPhysicsBody(circleOfRadius: frame.size.width/2)
+        ball.physicsBody?.mass = 0.1
+        ball.physicsBody?.friction = 0.0;
+        ball.physicsBody?.restitution = 1.0;
+        ball.physicsBody?.linearDamping = 0.0;
+        ball.physicsBody?.isDynamic = true;
+        ball.physicsBody?.contactTestBitMask = PhysicsCategory.ball
+        
+        addChild(ball)
+        ball.physicsBody?.applyImpulse(CGVector(dx: -20.0, dy: -20.0))
+        // Ball color based on speed.
+        
+        
+//        // Create the actions
+//        let actionMove = SKAction.move(to: CGPoint(x: -monster.size.width/2, y: actualY),
+//                                       duration: TimeInterval(actualDuration))
+//        let actionMoveDone = SKAction.removeFromParent()
+        //monster.run(SKAction.sequence([actionMove, actionMoveDone]))
+    }
+    
+    func randomVector() -> CGVector {
+        let x = CGFloat(Float(arc4random()) / Float(UINT32_MAX))
+        let y = CGFloat(Float(arc4random()) / Float(UINT32_MAX))
+        return CGVector(dx: x, dy: y)
+    }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        var firstBody: SKPhysicsBody
+        var secondBody: SKPhysicsBody
+        
+        print("whaaat")
+        
     }
     
     
     func touchDown(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.green
-            self.addChild(n)
-        }
     }
     
     func touchMoved(toPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.blue
-            self.addChild(n)
-        }
     }
     
     func touchUp(atPoint pos : CGPoint) {
-        if let n = self.spinnyNode?.copy() as! SKShapeNode? {
-            n.position = pos
-            n.strokeColor = SKColor.red
-            self.addChild(n)
-        }
+ 
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        if let label = self.label {
-            label.run(SKAction.init(named: "Pulse")!, withKey: "fadeInOut")
-        }
-        
         for t in touches { self.touchDown(atPoint: t.location(in: self)) }
     }
     
@@ -107,4 +133,8 @@ class GameScene: SKScene {
         
         self.lastUpdateTime = currentTime
     }
+}
+
+extension GameScene: SKPhysicsContactDelegate {
+    
 }
