@@ -21,6 +21,7 @@ class GameScene: SKScene {
     var graphs = [String : GKGraph]()
     
     private var lastUpdateTime : TimeInterval = 0
+    private var currentScore : Int = 0
     
     override func sceneDidLoad() {
         lastUpdateTime = 0
@@ -46,7 +47,17 @@ class GameScene: SKScene {
         addChild(leftBoundary)
         addChild(rightBoundary)
         
-        addBall(withSpeed: -60.5)
+        // Set the speed of the ball based on score with var 'speed'
+        
+        addBall(withSpeed: ballSpeed())
+    }
+    
+    // Return speed of the ball based on the score on a tiered system
+    func ballSpeed() -> CGFloat {
+        var defaultSpeed : CGFloat = -80.0
+        
+        defaultSpeed = defaultSpeed - CGFloat(integerLiteral: currentScore) / 10 * 20
+        return defaultSpeed
     }
     
     func addBall(withSpeed: CGFloat) {
@@ -63,14 +74,9 @@ class GameScene: SKScene {
         
         addChild(ball)
         ball.physicsBody?.applyImpulse(CGVector(dx: -20.0, dy: -20.0))
-        // Ball color based on speed.
         
+        // Set the ball color based on speed.
         
-//        // Create the actions
-//        let actionMove = SKAction.move(to: CGPoint(x: -monster.size.width/2, y: actualY),
-//                                       duration: TimeInterval(actualDuration))
-//        let actionMoveDone = SKAction.removeFromParent()
-        //monster.run(SKAction.sequence([actionMove, actionMoveDone]))
     }
     
     func randomVector() -> CGVector {
@@ -80,13 +86,7 @@ class GameScene: SKScene {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        var firstBody: SKPhysicsBody
-        var secondBody: SKPhysicsBody
-        
-        print("whaaat")
-        
     }
-    
     
     func touchDown(atPoint pos : CGPoint) {
     }
